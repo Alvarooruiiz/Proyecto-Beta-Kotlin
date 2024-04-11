@@ -8,7 +8,8 @@
     android:layout_marginLeft="10dp"
     android:layout_marginRight="10dp"
     android:layout_marginTop="10dp"
-    android:layout_marginBottom="10dp">
+    android:layout_marginBottom="10dp"
+    tools:context=".EditRegist.SharedEditRegister">
 
     <TextView
         android:id="@+id/tvRegis"
@@ -26,7 +27,7 @@
 
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/txtUserReg"
+        android:id="@+id/txtUser"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Introduzca el nombre de usuario"
@@ -45,7 +46,7 @@
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/txtEmailReg"
+        android:id="@+id/txtEmail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Introduzca el correo"
@@ -65,7 +66,7 @@
 
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/txtPasswordReg"
+        android:id="@+id/txtPassword"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:endIconMode="password_toggle"
@@ -84,7 +85,7 @@
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/txtPasswordRepeatReg"
+        android:id="@+id/txtPasswordRepeat"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:endIconMode="password_toggle"

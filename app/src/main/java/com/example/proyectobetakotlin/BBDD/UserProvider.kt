@@ -137,7 +137,8 @@ class UserProvider : ContentProvider() {
     }
 
 
-    object Usuarios : BaseColumns {
+    object Users : BaseColumns {
+        const val _ID = "_id"
         const val COL_USER = "user_name"
         const val COL_PASSWORD = "user_pass"
         const val COL_EMAIL = "user_mail"
@@ -147,7 +148,7 @@ class UserProvider : ContentProvider() {
         const val COL_STATUS = "user_status"
     }
 
-    object Imagenes : BaseColumns {
+    object Images : BaseColumns {
         const val COL_USER_ID = "user_id"
         const val COL_IMAGE_URL = "image_url"
     }

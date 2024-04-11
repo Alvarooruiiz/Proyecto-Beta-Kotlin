@@ -6,10 +6,10 @@ class User : Serializable {
     var id = 0
     var userName: String? = null
     var userPass: String? = null
-    var userMail: String? = null
+    var userEmail: String? = null
     var userBirth: String? = null
     var userAcc = 0
-    var userImage: ByteArray = TODO()
+    var userImage: ByteArray? = null
     var userStatus = 0
     var isChecked = false
 
@@ -17,11 +17,12 @@ class User : Serializable {
     constructor(id: Int, userName: String?, userMail: String?, userPass: String?, userBirth: String?, userAcc: Int, userImage: ByteArray, userStatus: Int) {
         this.id = id
         this.userName = userName
-        this.userMail = userMail
+        this.userEmail = userMail
         this.userPass = userPass
         this.userBirth = userBirth
         this.userAcc = userAcc
         this.userImage = userImage
         this.userStatus = userStatus
     }
+
 }

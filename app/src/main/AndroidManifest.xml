@@ -21,7 +21,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".EditRegist.SharedEditRegister"/>
+        <activity android:name=".EditRegist.SharedEditRegister"
+            android:windowSoftInputMode="adjustPan" />
+        <activity android:name=".List"/>
     </application>
 
 </manifest>

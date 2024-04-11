@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">ProyectoBetaKotlin</string>
+    <string name="login" translatable="false">Login</string>
+
+    <string-array name="Accounts">
+        <item>Admin</item>
+        <item>Normal</item>
+    </string-array>
 </resources>
