@@ -72,8 +72,13 @@ class UserProvider : ContentProvider() {
                 IMAGES -> db.insert(IMAGES_TABLE, null, values)
                 else -> throw IllegalArgumentException("URI desconocido: $uri")
             }
+        val contentUri = when (URI_MATCHER!!.match(uri)) {
+            USERS -> CONTENT_URI_USERS
+            IMAGES -> CONTENT_URI_IMAGES
+            else -> throw IllegalArgumentException("URI desconocido: $uri")
+        }
         return if (regId != -1L) {
-            ContentUris.withAppendedId(uri, regId)
+            ContentUris.withAppendedId(contentUri, regId)
         } else {
             throw android.database.SQLException("Falla al insertar fila en: $uri")
         }
@@ -154,7 +159,7 @@ class UserProvider : ContentProvider() {
     }
 
     companion object {
-        private const val AUTHORITY = "com.example.proyectobetakotlin.BBDD"
+        private const val AUTHORITY = "com.example.proyectobetakotlin.bbdd"
         private const val USERS_PATH = "users"
         private const val IMAGES_PATH = "images"
         private const val URI_USERS = "content://" + AUTHORITY + "/" + USERS_PATH
@@ -168,8 +173,8 @@ class UserProvider : ContentProvider() {
         var URI_MATCHER: UriMatcher? = null
         const val BD_NAME = "DBUSERS_V1"
         const val BD_VERSION = 1
-        const val USERS_TABLE = "Users"
-        const val IMAGES_TABLE = "Images"
+        const val USERS_TABLE = "UsersTable"
+        const val IMAGES_TABLE = "ImagesTable"
         private const val IMAGES = 3
         private const val IMAGES_ID = 4
 

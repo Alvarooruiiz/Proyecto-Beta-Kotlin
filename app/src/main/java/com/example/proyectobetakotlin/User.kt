@@ -25,4 +25,5 @@ class User : Serializable {
         this.userStatus = userStatus
     }
 
+
 }

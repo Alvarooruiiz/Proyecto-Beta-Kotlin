@@ -1,9 +1,14 @@
 package com.example.proyectobetakotlin.EditRegist
 
+import android.content.ContentUris
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.text.Editable
 import android.view.View
 import android.view.inputmethod.InputMethodManager
@@ -11,13 +16,22 @@ import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.proyectobetakotlin.BBDD.UserProvider
+import com.example.proyectobetakotlin.Images.OnImageClickListener
+import com.example.proyectobetakotlin.Images.RecyclerAdapterImages
 import com.example.proyectobetakotlin.Login.Login
 import com.example.proyectobetakotlin.User
 import com.example.proyectobetakotlin.databinding.EditRegisLayoutBinding
 import com.google.android.material.datepicker.CalendarConstraints
 import com.google.android.material.datepicker.DateValidatorPointBackward
 import com.google.android.material.datepicker.MaterialDatePicker
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import java.io.ByteArrayOutputStream
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -31,6 +45,12 @@ class SharedEditRegister : AppCompatActivity() {
         private var userSelected: User? = null
         private var isRegistering: Boolean? = null
         private val REQUEST_LOGIN = 102
+        private const val REQUEST_SELECT_IMAGE = 100
+        private const val REQUEST_IMAGE_CAPTURE = 101
+        private val imagesList: ArrayList<Bitmap> = ArrayList()
+        private var recyclerAdapterImages: RecyclerAdapterImages? = null
+        private var imageOn: Boolean? = null
+
     }
 
 
@@ -50,6 +70,30 @@ class SharedEditRegister : AppCompatActivity() {
             userSelected = intent.getSerializableExtra("userSelected") as User?
         }
 
+        recyclerAdapterImages = RecyclerAdapterImages(this, imagesList)
+        val onImageClickListener = object : OnImageClickListener {
+            override fun onImageClick(position: Int) {
+                MaterialAlertDialogBuilder(this@SharedEditRegister)
+                    .setTitle("Mensaje")
+                    .setMessage("¿Qué desea hacer con la imagen?")
+                    .setNegativeButton("Eliminar la imagen") { dialog, which ->
+                        deletePhoto(position)
+                    }
+                    .setPositiveButton("Utilizarla de avatar") { dialog, which ->
+                        useAsAvatar(position)
+                    }
+                    .setNeutralButton("Cancelar", null)
+                    .show()
+            }
+        }
+        recyclerAdapterImages!!.setOnImageClickListener(onImageClickListener)
+
+
+
+        binding.rvImagesUser.layoutManager = LinearLayoutManager(this,LinearLayoutManager.HORIZONTAL,false)
+        binding.rvImagesUser.adapter = recyclerAdapterImages
+
+
         binding.etDate.setOnClickListener{
             closeKeyboard(this,binding.etDate)
             selectBirthDatePicker()
@@ -63,6 +107,7 @@ class SharedEditRegister : AppCompatActivity() {
             if (registerUser()) {
                 val loginLayout = Intent(this@SharedEditRegister, Login::class.java)
                 startActivityForResult(loginLayout, SharedEditRegister.REQUEST_LOGIN)
+                imagesList.clear()
                 finish()
             }
         }
@@ -82,9 +127,63 @@ class SharedEditRegister : AppCompatActivity() {
                 finish()
             }
         }
+
+        binding.ivIconImage.setOnClickListener {
+            showOptionsDialog()
+        }
     }
 
     private fun registerUser(): Boolean{
+        if(areFieldsFilled()){
+
+            val registro = ContentValues().apply {
+                put(UserProvider.Users.COL_USER, binding.txtUser.editText?.getText().toString().trim())
+                put(UserProvider.Users.COL_PASSWORD, binding.txtPassword.editText?.getText().toString().trim())
+                put(UserProvider.Users.COL_EMAIL, binding.txtEmail.editText?.getText().toString().trim())
+                put(UserProvider.Users.COL_DATE, binding.etDate.editableText.toString().trim())
+                put(UserProvider.Users.COL_ACCTYPE, getTypeAccount())
+
+                val ivIconImage = binding.ivIconImage
+
+                ivIconImage.isDrawingCacheEnabled = true
+                ivIconImage.buildDrawingCache()
+                val bitmap = (ivIconImage.drawable as BitmapDrawable).bitmap
+
+                val outputStream = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+                val imageData = outputStream.toByteArray()
+                put(UserProvider.Users.COL_ICON, imageData)
+
+                if (isUserExists(binding.txtUser.editText?.getText().toString().trim())) {
+                    Toast.makeText(this@SharedEditRegister, "El usuario ya existe", Toast.LENGTH_SHORT).show()
+                    return false
+                } else if (isEmailExists(binding.txtEmail.editText?.getText().toString().trim())) {
+                    Toast.makeText(this@SharedEditRegister, "El correo ya existe", Toast.LENGTH_SHORT).show()
+                    return false
+                }
+            }
+            val cr = contentResolver
+            val newUri = cr.insert(UserProvider.CONTENT_URI_USERS, registro)
+            return if (newUri != null) {
+                val userId = ContentUris.parseId(newUri)
+                for (bitmap in imagesList) {
+                    val baos = ByteArrayOutputStream()
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos)
+                    val imageData = baos.toByteArray()
+                    val imageValues = ContentValues()
+                    imageValues.put(UserProvider.Images.COL_USER_ID, userId)
+                    imageValues.put(UserProvider.Images.COL_IMAGE_URL, imageData)
+                    val imagesUri: Uri = UserProvider.CONTENT_URI_IMAGES
+                    contentResolver.insert(imagesUri, imageValues)
+                }
+                Toast.makeText(this@SharedEditRegister, "Usuario registrado exitosamente", Toast.LENGTH_SHORT).show()
+                generateNotification(binding.txtUser.editText?.getText().toString().trim())
+                true
+            } else {
+                Toast.makeText(this@SharedEditRegister, "Error al guardar el usuario", Toast.LENGTH_SHORT).show()
+                false
+            }
+        }
         return false
     }
 
@@ -96,14 +195,120 @@ class SharedEditRegister : AppCompatActivity() {
         return false
     }
 
+    private fun generateNotification(name: String){
 
+    }
+
+    private fun isUserExists(userName: String): Boolean {
+        val cursor = contentResolver.query(
+            UserProvider.CONTENT_URI_USERS,
+            null,
+            UserProvider.Users.COL_USER + " = ?", arrayOf<String>(userName),
+            null
+        )
+        val exists = cursor != null && cursor.count > 0
+        cursor?.close()
+        return exists
+    }
+
+    private fun isEmailExists(email: String): Boolean {
+        val cursor = contentResolver.query(
+            UserProvider.CONTENT_URI_USERS,
+            null,
+            UserProvider.Users.COL_EMAIL + " = ?", arrayOf<String>(email),
+            null
+        )
+        val exists = cursor != null && cursor.count > 0
+        cursor?.close()
+        return exists
+    }
+
+    private fun getTypeAccount() : Int{
+        if(binding.spAcc.text.toString() ==  "Administrador"){
+            return 0
+        }
+        return 1
+    }
+
+    private fun deletePhoto(position: Int){
+        if (position != RecyclerView.NO_POSITION) {
+            val iconBitmap = (binding.ivIconImage.getDrawable() as BitmapDrawable).bitmap
+            val imageToDeleteBitmap = imagesList[position]
+            if (imageToDeleteBitmap != null && imageToDeleteBitmap.sameAs(iconBitmap)) {
+                binding.ivIconImage.setImageDrawable(null)
+            }
+            recyclerAdapterImages!!.notifyItemRemoved(position)
+            imagesList.removeAt(position)
+            Toast.makeText(this, "La imagen ha sido eliminada", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun useAsAvatar(position: Int){
+        if(position != RecyclerView.NO_POSITION){
+            binding.ivIconImage.setImageBitmap(imagesList[position])
+            Toast.makeText(this, "Imagen de perfil actualizada", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun showOptionsDialog(){
+        val alertDialog = AlertDialog.Builder(this)
+
+        alertDialog.apply {
+            //setIcon(R.drawable.ic_hello)
+            setTitle("Introduzca las imagenes")
+            setItems(
+                arrayOf<CharSequence>("Seleccionar desde la galeria", "Abrir camara")
+            ) { dialog, which ->
+                when (which) {
+                    0 -> openGallery()
+                    1 -> openCamera()
+                    else -> {}
+                }
+            }
+        }.create().show()
+    }
+
+
+    private fun openGallery(){
+        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        startActivityForResult(intent, REQUEST_SELECT_IMAGE)
+    }
+
+    private fun openCamera(){
+        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        startActivityForResult(intent, REQUEST_IMAGE_CAPTURE)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode == RESULT_OK) {
+            if (requestCode == REQUEST_SELECT_IMAGE && data != null) {
+                val selectedImageUri = data.data
+                try {
+                    val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, selectedImageUri)
+                    imagesList.add(bitmap)
+                    binding.ivIconImage.setImageBitmap(bitmap)
+                    recyclerAdapterImages?.notifyDataSetChanged()
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                }
+            } else if (requestCode == REQUEST_IMAGE_CAPTURE && data != null) {
+                val imageBitmap = data.extras?.get("data") as Bitmap?
+                if (imageBitmap != null) {
+                    imagesList.add(imageBitmap)
+                    binding.ivIconImage.setImageBitmap(imageBitmap)
+                    recyclerAdapterImages?.notifyDataSetChanged()
+                }
+            }
+        }
+    }
 
 
     private fun fillFields(){
-        binding.txtUser.editText?.text = Editable.Factory.getInstance().newEditable(userSelected?.userName.toString())
-        binding.txtEmail.editText?.text = Editable.Factory.getInstance().newEditable(userSelected?.userEmail.toString())
-        binding.txtPassword.editText?.text = Editable.Factory.getInstance().newEditable(userSelected?.userPass.toString())
-        binding.txtPasswordRepeat.editText?.text = Editable.Factory.getInstance().newEditable(userSelected?.userPass.toString())
+        binding.txtUser.editText!!.text = Editable.Factory.getInstance().newEditable(userSelected?.userName.toString())
+        binding.txtEmail.editText!!.text = Editable.Factory.getInstance().newEditable(userSelected?.userEmail.toString())
+        binding.txtPassword.editText!!.text = Editable.Factory.getInstance().newEditable(userSelected?.userPass.toString())
+        binding.txtPasswordRepeat.editText!!.text = Editable.Factory.getInstance().newEditable(userSelected?.userPass.toString())
         binding.etDate.text = Editable.Factory.getInstance().newEditable(userSelected?.userBirth.toString())
 
         if(userSelected?.userAcc == 1){
@@ -119,6 +324,10 @@ class SharedEditRegister : AppCompatActivity() {
     }
 
     private fun areFieldsFilled(): Boolean {
+        if(imagesList.size>0){
+            imageOn=true
+        }else imageOn=false
+
         var isFilled = true
         val userName = binding.txtUser.editText?.getText().toString().trim { it <= ' ' }
         val userEmail = binding.txtEmail.editText?.getText().toString().trim { it <= ' ' }
@@ -144,9 +353,9 @@ class SharedEditRegister : AppCompatActivity() {
         }else if(date.isEmpty()){
             Toast.makeText(this@SharedEditRegister, "Introduzca la fecha de nacimiento", Toast.LENGTH_SHORT).show()
             isFilled = false
-//        }else if(binding.ivIconImage==null){
-//            Toast.makeText(this@SharedEditRegister, "Introduzca la imagen de perfil", Toast.LENGTH_SHORT).show()
-//            isFilled = false
+        }else if(imageOn==false){
+            Toast.makeText(this@SharedEditRegister, "Introduzca la imagen de perfil", Toast.LENGTH_SHORT).show()
+            isFilled = false
         }else if(!spinnerChecked()){
             Toast.makeText(this@SharedEditRegister, "Introduzca el tipo de cuenta", Toast.LENGTH_SHORT).show()
             isFilled = false
@@ -164,11 +373,7 @@ class SharedEditRegister : AppCompatActivity() {
         val typesOfAccount = listOf("Administrador", "Estándar")
 
         if (binding.spAcc != null) {
-            val adapter = ArrayAdapter(
-                this,
-                android.R.layout.simple_dropdown_item_1line,
-                typesOfAccount
-            )
+            val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, typesOfAccount)
             (binding.spAcc as? AutoCompleteTextView)?.setAdapter(adapter)
         }
 
