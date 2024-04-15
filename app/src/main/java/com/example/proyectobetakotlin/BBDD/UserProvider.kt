@@ -154,6 +154,7 @@ class UserProvider : ContentProvider() {
     }
 
     object Images : BaseColumns {
+        const val _ID = "_id"
         const val COL_USER_ID = "user_id"
         const val COL_IMAGE_URL = "image_url"
     }

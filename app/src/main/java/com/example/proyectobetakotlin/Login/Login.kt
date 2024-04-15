@@ -2,11 +2,11 @@ package com.example.proyectobetakotlin.Login
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.proyectobetakotlin.BBDD.UserProvider
 import com.example.proyectobetakotlin.EditRegist.SharedEditRegister
+import com.example.proyectobetakotlin.List.UserListActivity
 import com.example.proyectobetakotlin.User
 import com.example.proyectobetakotlin.databinding.LoginLayoutBinding
 
@@ -14,7 +14,7 @@ class Login : AppCompatActivity() {
     private lateinit var binding: LoginLayoutBinding
 
     companion object{
-        private var usuarioLog: User? = null
+        private var userLog: User? = null
         private val REQUEST_REGISTER = 1
         private val REQUEST_LOGIN = 0
     }
@@ -35,24 +35,17 @@ class Login : AppCompatActivity() {
             startActivityForResult(intentRegister, REQUEST_REGISTER)
         }
 
-            binding.btnLogin.setOnClickListener {
-
-            usuarioLog = getAuthenticatedUser()
-            if (usuarioLog != null) {
-                val intentList = Intent(this@Login, List::class.java)
-                intentList.putExtra("userLog", Login.usuarioLog)
+        binding.btnLogin.setOnClickListener {
+            userLog = getAuthenticatedUser()
+            if (userLog != null) {
+                val intentList = Intent(this@Login, UserListActivity::class.java)
+                intentList.putExtra("userLog", Login.userLog)
                 cleanFields()
-                startActivityForResult(intentList, Login.REQUEST_LOGIN)
+                startActivity(intentList)
             } else {
                 Toast.makeText(this@Login,"La cuenta no existe o la contraseña es incorrecta", Toast.LENGTH_SHORT).show()
             }
         }
-
-
-
-
-
-
     }
 
     private fun cleanFields() {

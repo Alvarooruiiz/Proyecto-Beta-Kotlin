@@ -28,7 +28,8 @@
         </activity>
         <activity android:name=".EditRegist.SharedEditRegister"
             android:windowSoftInputMode="adjustPan" />
-        <activity android:name=".List.List"/>
+        <activity android:name=".List.UserListActivity"/>
+        <activity android:name=".Carousel.CarouselActivity"/>
 
         <provider
             android:name="com.example.proyectobetakotlin.BBDD.UserProvider"
