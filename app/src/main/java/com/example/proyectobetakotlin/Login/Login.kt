@@ -12,9 +12,9 @@ import com.example.proyectobetakotlin.databinding.LoginLayoutBinding
 
 class Login : AppCompatActivity() {
     private lateinit var binding: LoginLayoutBinding
+    private var userLog: User? = null
 
     companion object{
-        private var userLog: User? = null
         private val REQUEST_REGISTER = 1
         private val REQUEST_LOGIN = 0
     }
@@ -39,7 +39,7 @@ class Login : AppCompatActivity() {
             userLog = getAuthenticatedUser()
             if (userLog != null) {
                 val intentList = Intent(this@Login, UserListActivity::class.java)
-                intentList.putExtra("userLog", Login.userLog)
+                intentList.putExtra("userLog", userLog)
                 cleanFields()
                 startActivity(intentList)
             } else {

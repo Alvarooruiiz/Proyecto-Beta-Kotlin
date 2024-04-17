@@ -26,7 +26,6 @@ class RecyclerAdapterList(
 ) : RecyclerView.Adapter<RecyclerAdapterList.ViewHolder>() {
 
 
-
     private var onAvatarClickListener: OnAvatarClickListener? = null
     private var onItemCardViewClickListener: OnItemCardViewClickListener? = null
 
@@ -35,7 +34,8 @@ class RecyclerAdapterList(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.recycler_view_list_style, parent, false)
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.recycler_view_cardview_list, parent, false)
         return ViewHolder(view)
     }
 
@@ -56,7 +56,8 @@ class RecyclerAdapterList(
             holder.avatar.setImageResource(R.drawable.user_icon)
         }
 
-        val backgroundColor = if (userSelected.userStatus == 1) Color.parseColor("#FFBABABA") else Color.parseColor("#D8F4B6")
+        val backgroundColor =
+            if (userSelected.userStatus == 1) Color.parseColor("#FFBABABA") else Color.parseColor("#D8F4B6")
         holder.constraintLayout.setBackgroundColor(backgroundColor)
 
         holder.itemView.setOnClickListener {
@@ -67,7 +68,11 @@ class RecyclerAdapterList(
                 intent.putExtra("userLog", userLog)
                 (context as UserListActivity).startActivityForResult(intent, REQUEST_EDIT_USER)
             } else {
-                Toast.makeText(context, "No tienes permiso para editar este perfil", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    "No tienes permiso para editar este perfil",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
 
@@ -94,7 +99,7 @@ class RecyclerAdapterList(
         notifyDataSetChanged()
     }
 
-    fun setOnAvatarClickListener(listener: UserListActivity) {
+    fun setOnAvatarClickListener(listener: ListFragment) {
         this.onAvatarClickListener = listener
     }
 
